@@ -21,10 +21,15 @@ namespace LenseTests
                     settings = new Settings();
                 return settings;
             }
+            set
+            {
+                settings = value;
+            }
         }
         public Settings()
         {
             InitializeComponent();
+            GetForm = this;
         }
 
         private void Settings_Load(object sender, EventArgs e)
@@ -37,8 +42,7 @@ namespace LenseTests
         private void button1_Click(object sender, EventArgs e)
         {
             var lense = Lense.GetForm;
-            lense.LenseHeight = int.Parse(textBox1.Text);
-            lense.LenseWidth = int.Parse(textBox2.Text);
+            lense.setSize(int.Parse(textBox2.Text), int.Parse(textBox1.Text));
         }
     }
 }

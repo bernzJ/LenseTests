@@ -7,13 +7,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Threading;
+
 
 namespace LenseTests
 {
     public partial class Lense : Form
     {
+        private System.Threading.Timer timer = null;
         private static Lense lense;
+        private int lenseWidth = 317;
+        private int lenseHeight = 196;
+        private int zoomFactor = 1;
 
+        public object SyncLock = new object();
         public static Lense GetForm
         {
             get
@@ -22,15 +29,27 @@ namespace LenseTests
                     lense = new Lense();
                 return lense;
             }
+            private set
+            {
+                lense = value;
+            }
         }
-        public int LenseWidth { get; set; } = 317;
-        public int LenseHeight { get; set; } = 196;
-        public int ZoomFactor { get; set; } = 1;
+        public int LenseWidth { get => lenseWidth; set => lenseWidth = value; }
+        public int LenseHeight { get => lenseHeight; set => lenseHeight = value; }
+        public int ZoomFactor { get => zoomFactor; set => zoomFactor = value; }
         public Lense()
         {
             InitializeComponent();
+            GetForm = this;
+            Size = new Size(LenseWidth, LenseHeight);
+            timer = new System.Threading.Timer(timer_Tick, null, 0, Timeout.Infinite);
         }
-
+        public void setSize(int w, int h)
+        {
+            LenseWidth = w;
+            LenseHeight = h;
+            Size = new Size(w, h);
+        }
         private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             Settings.GetForm.Show();
@@ -49,18 +68,25 @@ namespace LenseTests
         {
             ZoomFactor = ZoomFactor + dir == 0 ? ZoomFactor : ZoomFactor += dir;
         }
-        private void timer1_Tick(object sender, EventArgs e)
+        private void timer_Tick(object state)
         {
-
             Point position = Cursor.Position;
             Bitmap temp = getTemp(position.X, position.Y);
             Size newSize = new Size(LenseWidth * ZoomFactor, LenseHeight * ZoomFactor);
             Bitmap lens = new Bitmap(temp, newSize);
 
-            pictureBox1.Image = lens;
-            Left = position.X + 20;
-            Top = position.Y + LenseHeight + 5;
-            pictureBox1.Refresh();
+            // Invoke
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() =>
+                {
+                    pictureBox1.Image = lens;
+                    Left = position.X + 20;
+                    Top = position.Y + LenseHeight + 5;
+                    pictureBox1.Refresh();
+                }));
+            }
+            timer.Change(1, Timeout.Infinite);
         }
 
         private void Lense_KeyDown(object sender, KeyEventArgs e)
