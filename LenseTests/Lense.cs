@@ -16,11 +16,11 @@ namespace LenseTests
     {
         private System.Threading.Timer timer = null;
         private static Lense lense;
-        private int lenseWidth = 317;
-        private int lenseHeight = 196;
-        private int zoomFactor = 1;
+        private volatile int lenseWidth = 317;
+        private volatile int lenseHeight = 196;
+        private volatile int zoomFactor = 1;
+        private Bitmap lens = null;
 
-        public object SyncLock = new object();
         public static Lense GetForm
         {
             get
@@ -50,18 +50,22 @@ namespace LenseTests
             LenseHeight = h;
             Size = new Size(w, h);
         }
+        public void setZoomFactor(decimal factor)
+        {
+            ZoomFactor = decimal.ToInt32(factor);
+        }
         private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             Settings.GetForm.Show();
-
         }
 
         private Bitmap getTemp(int x, int y)
         {
             Bitmap temp = new Bitmap(LenseWidth, LenseHeight);
-            Graphics g = Graphics.FromImage(temp);
-            g.CopyFromScreen(x, y, 0, 0, temp.Size);
-            g.Dispose();
+            using (Graphics g = Graphics.FromImage(temp))
+            {
+                g.CopyFromScreen(x, y, 0, 0, temp.Size);
+            }
             return temp;
         }
         private void setZoomFactor(int dir = 1)
@@ -71,20 +75,27 @@ namespace LenseTests
         private void timer_Tick(object state)
         {
             Point position = Cursor.Position;
-            Bitmap temp = getTemp(position.X, position.Y);
-            Size newSize = new Size(LenseWidth * ZoomFactor, LenseHeight * ZoomFactor);
-            Bitmap lens = new Bitmap(temp, newSize);
-
-            // Invoke
-            if (InvokeRequired)
+            using (Bitmap temp = getTemp(position.X, position.Y))
             {
-                Invoke(new Action(() =>
+                Size newSize = new Size(LenseWidth * ZoomFactor, LenseHeight * ZoomFactor);
+                Bitmap prev = lens;
+                lens = new Bitmap(temp, newSize);
+
+                prev?.Dispose();
+                // HACK BELOW
+                //GC.Collect();
+                //GC.WaitForPendingFinalizers();
+                // Invoke
+                if (InvokeRequired)
                 {
-                    pictureBox1.Image = lens;
-                    Left = position.X + 20;
-                    Top = position.Y + LenseHeight + 5;
-                    pictureBox1.Refresh();
-                }));
+                    Invoke(new Action(() =>
+                    {
+                        pictureBox1.Image = lens;
+                        Left = position.X + 20;
+                        Top = position.Y + LenseHeight + 5;
+                        //pictureBox1.Refresh();
+                    }));
+                }
             }
             timer.Change(1, Timeout.Infinite);
         }

@@ -12,6 +12,7 @@ namespace LenseTests
 {
     public partial class Settings : Form
     {
+        private Lense lense { get => Lense.GetForm; }
         private static Settings settings;
         public static Settings GetForm
         {
@@ -34,15 +35,19 @@ namespace LenseTests
 
         private void Settings_Load(object sender, EventArgs e)
         {
-            var lense = Lense.GetForm;
             textBox1.Text = lense.Height.ToString();
             textBox2.Text = lense.Width.ToString();
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            var lense = Lense.GetForm;
             lense.setSize(int.Parse(textBox2.Text), int.Parse(textBox1.Text));
+        }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+            decimal factor = numericUpDown1.Value;
+            lense.setZoomFactor(factor);
         }
     }
 }
