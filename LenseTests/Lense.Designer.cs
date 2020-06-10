@@ -48,8 +48,8 @@ namespace LenseTests
             // 
             // notifyIcon1
             // 
+            this.notifyIcon1.Icon = global::LenseTests.Properties.Resources.lense;
             this.notifyIcon1.Text = "notifyIcon1";
-            this.notifyIcon1.Icon = Properties.Resources.lense;
             this.notifyIcon1.Visible = true;
             this.notifyIcon1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon1_MouseDoubleClick);
             // 
